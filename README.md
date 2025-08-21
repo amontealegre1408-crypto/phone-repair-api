@@ -49,7 +49,7 @@ API REST desarrollada con **NestJS** y **TypeScript** para la gestión integral 
 
 - Node.js >= 16.x
 - npm >= 8.x
-- PostgreSQL >= 12.x
+- mysql2 >= 3.x
 
 ### Pasos de instalación
 
