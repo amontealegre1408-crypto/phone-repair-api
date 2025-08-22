@@ -10,8 +10,19 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME || 'root',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_DATABASE || 'phone_repair_db',
+  timezone: 'America/Bogota', // 🔥 Zona horaria Colombia
+
+  // SOLO para migraciones
   entities: ['src/**/*.entity{.ts,.js}'],
   migrations: ['src/migrations/*{.ts,.js}'],
+
+  // Configuración CLI
   synchronize: false,
-  logging: true,
+  logging: ['error', 'migration'],
+
+  // Solo mostrar logs de migración
+  logger: 'advanced-console',
+
+  // Configuración para CLI
+  migrationsTableName: 'typeorm_migrations',
 });

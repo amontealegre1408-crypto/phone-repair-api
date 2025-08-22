@@ -10,9 +10,18 @@ export const getDatabaseConfig = (
   username: configService.get('DB_USERNAME'),
   password: configService.get('DB_PASSWORD'),
   database: configService.get('DB_DATABASE'),
+  timezone: 'America/Bogota', // 🔥 Zona horaria Colombia
+
+  // SOLO entidades para la app (sin migraciones)
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-  migrations: [__dirname + '/../migrations/*{.ts,.js}'], // Agregar esto
-  synchronize: configService.get('NODE_ENV') === 'development',
+
+  // Configuración de la app
+  synchronize: false, // SIEMPRE false en producción
   logging: configService.get('NODE_ENV') === 'development',
-  migrationsRun: configService.get('NODE_ENV') === 'production', // Opcional
+
+
+  // Configuración adicional
+  retryAttempts: 3,
+  retryDelay: 3000,
+  autoLoadEntities: true, // NestJS cargará entidades automáticamente
 });

@@ -6,7 +6,7 @@ import { RepairStatus } from '../enum/repair-status.enum';
 export class RepairQueryDto extends PaginationDto {
   @IsOptional()
   @IsEnum(RepairStatus)
-  status?: RepairStatus;
+  statusRepair?: RepairStatus;
 
   @IsOptional()
   @IsDateString()

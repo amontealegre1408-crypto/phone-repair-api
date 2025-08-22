@@ -61,7 +61,7 @@ export class RepairsRepository implements IRepository<Repair> {
     const {
       page = 1,
       limit = 10,
-      status,
+      statusRepair,
       startDate,
       endDate,
       phoneId,
@@ -75,8 +75,8 @@ export class RepairsRepository implements IRepository<Repair> {
       .orderBy('repair.createdAt', 'DESC');
 
     // Apply filters
-    if (status) {
-      queryBuilder.andWhere('repair.status = :status', { status });
+    if (statusRepair) {
+      queryBuilder.andWhere('repair.status = :status', { statusRepair });
     }
 
     if (startDate && endDate) {

@@ -7,6 +7,7 @@ import {
   Delete,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -15,14 +16,16 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { UserRole } from '../auth/enum/role.enum';
 import { User } from './user.entity';
-
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Users')
 @ApiBearerAuth()
@@ -36,10 +39,69 @@ export class UsersController {
   constructor(private usersService: UsersService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all users' })
-  @ApiResponse({ status: 200, description: 'List of all users', type: [User] })
-  async findAll() {
-    return this.usersService.findAll();
+  @ApiOperation({ summary: 'Get all users with pagination and filters' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of items per page (default: 10, max: 100)',
+    example: 10,
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Search in firstName, lastName or email',
+    example: 'john',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['all', 'active', 'inactive'],
+    description: 'Filter by user status (default: all)',
+    example: 'active',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated list of users',
+    schema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/User' },
+        },
+        pagination: {
+          type: 'object',
+          properties: {
+            currentPage: { type: 'number', example: 1 },
+            totalPages: { type: 'number', example: 10 },
+            totalItems: { type: 'number', example: 100 },
+            itemsPerPage: { type: 'number', example: 10 },
+            hasNextPage: { type: 'boolean', example: true },
+            hasPreviousPage: { type: 'boolean', example: false },
+          },
+        },
+      },
+    },
+  })
+  @Throttle({ long: { limit: 100, ttl: 60000 } })
+  async findAll(@Query() paginationDto: PaginationDto) {
+    return this.usersService.findAll(paginationDto);
+  }
+
+  @Get('me')
+  @ApiOperation({ summary: 'Get current user' })
+  @ApiResponse({ status: 200, description: 'Current user data', type: User })
+  me(@Req() req: any) {
+    return req.user;
   }
 
   @Get(':id')

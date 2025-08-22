@@ -2,6 +2,8 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { UsersRepository } from './users.repository';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './user.entity';
+import { PaginatedResponse } from '../../common/dto/paginate-response';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 
 @Injectable()
 export class UsersService {
@@ -11,8 +13,10 @@ export class UsersService {
     return this.usersRepository.create(createUserDto);
   }
 
-  async findAll(): Promise<User[]> {
-    return this.usersRepository.findAll();
+  async findAll(
+    paginationDto: PaginationDto,
+  ): Promise<PaginatedResponse<User>> {
+    return this.usersRepository.findAllPaginated(paginationDto);
   }
 
   async findById(id: string): Promise<User> {
@@ -28,7 +32,6 @@ export class UsersService {
   }
 
   async delete(id: string, currentUser: User): Promise<void> {
-
     // Validar que no elimine su propia cuenta
     if (currentUser.id === id || currentUser.email === id) {
       throw new ForbiddenException('No puedes eliminar tu propia cuenta');

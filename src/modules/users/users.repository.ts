@@ -4,6 +4,9 @@ import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { IRepository } from '../../common/interfaces/repository.interface';
 import { CreateUserDto } from './dto/create-user.dto';
+import { PaginationDto } from '../../common/dto/pagination.dto';
+import { PaginatedResponse } from '../../common/dto/paginate-response';
+
 
 @Injectable()
 export class UsersRepository implements IRepository<User> {
@@ -29,6 +32,67 @@ export class UsersRepository implements IRepository<User> {
         'createdAt',
       ],
     });
+  }
+
+  async findAllPaginated(
+    paginationDto: PaginationDto,
+  ): Promise<PaginatedResponse<User>> {
+    const { page = 1, limit = 10, search, status } = paginationDto;
+
+    const queryBuilder = this.userRepository.createQueryBuilder('user');
+
+    // Seleccionar solo los campos necesarios
+    queryBuilder.select([
+      'user.id',
+      'user.email',
+      'user.firstName',
+      'user.lastName',
+      'user.role',
+      'user.isActive',
+      'user.createdAt',
+    ]);
+
+    // Aplicar filtro de búsqueda
+    if (search && search.trim() !== '') {
+      queryBuilder.where(
+        '(LOWER(user.firstName) LIKE LOWER(:search) OR LOWER(user.lastName) LIKE LOWER(:search) OR LOWER(user.email) LIKE LOWER(:search))',
+        { search: `%${search.trim()}%` },
+      );
+    }
+
+    // Aplicar filtro de status
+    if (status && status !== 'all') {
+      const isActive = status === 'active';
+      if (search && search.trim() !== '') {
+        queryBuilder.andWhere('user.isActive = :isActive', { isActive });
+      } else {
+        queryBuilder.where('user.isActive = :isActive', { isActive });
+      }
+    }
+
+    // Ordenar por fecha de creación (más recientes primero)
+    queryBuilder.orderBy('user.createdAt', 'DESC');
+
+    // Aplicar paginación
+    const skip = (page - 1) * limit;
+    queryBuilder.skip(skip).take(limit);
+
+    // Ejecutar consulta
+    const [data, totalItems] = await queryBuilder.getManyAndCount();
+
+    const totalPages = Math.ceil(totalItems / limit);
+
+    return {
+      data,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems,
+        itemsPerPage: limit,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   async findById(id: string): Promise<User> {
